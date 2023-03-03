@@ -66,8 +66,8 @@ app.use(passport.session());
 app.use(express.json());
 app.use(logger('dev'));
 
-app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/', indexRouter);
 
 app.use((req, res, next) => {
   next(createError(404));
