@@ -1,11 +1,43 @@
 const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
+const JSONStrategy = require('passport-json').Strategy;
+const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const logger = require('morgan');
 const createError = require('http-errors');
+const User = require('./models/user');
 const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
 
 const app = express();
+
+passport.use(
+  new JSONStrategy({ usernameProp: 'email' }, (email, password, done) => {
+    User.findOne({ email }).exec(async (err, user) => {
+      if (err) {
+        return done(err);
+      }
+
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        return done(null, false);
+      }
+
+      done(null, user);
+    });
+  })
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  User.findById(id).exec((err, user) => {
+    done(err, user);
+  });
+});
 
 mongoose.set('strictQuery', false);
 main().catch((err) => console.log(err));
@@ -21,10 +53,21 @@ app.use(
   })
 );
 
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.json());
 app.use(logger('dev'));
 
 app.use('/', indexRouter);
+app.use('/users', usersRouter);
 
 app.use((req, res, next) => {
   next(createError(404));
