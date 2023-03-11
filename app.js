@@ -15,17 +15,19 @@ const app = express();
 
 passport.use(
   new JSONStrategy({ usernameProp: 'email' }, (email, password, done) => {
-    User.findOne({ email }).exec(async (err, user) => {
-      if (err) {
-        return done(err);
-      }
+    User.findOne({ email: new RegExp(`^${email}$`, 'i') }).exec(
+      async (err, user) => {
+        if (err) {
+          return done(err);
+        }
 
-      if (!user || !(await bcrypt.compare(password, user.password))) {
-        return done(null, false);
-      }
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+          return done(null, false);
+        }
 
-      done(null, user);
-    });
+        done(null, user);
+      }
+    );
   })
 );
 

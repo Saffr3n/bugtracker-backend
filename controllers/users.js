@@ -15,7 +15,7 @@ exports.create = [
     .notEmpty()
     .withMessage('Password is required')
     .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long'),
+    .withMessage('Password is less than 8 characters'),
   body('firstName').trim().notEmpty().withMessage('First name is required'),
   body('lastName').trim().notEmpty().withMessage('Last name is required'),
 
@@ -41,7 +41,9 @@ exports.create = [
       return next(err);
     }
 
-    const foundUser = await User.findOne({ email: req.body.email })
+    const foundUser = await User.findOne({
+      email: new RegExp(`^${req.body.email}$`, 'i')
+    })
       .exec()
       .catch((err) => next(err));
 
