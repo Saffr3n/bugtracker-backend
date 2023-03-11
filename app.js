@@ -59,7 +59,10 @@ app.use(
   session({
     secret: process.env.SECRET,
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    cookie: {
+      sameSite: 'strict'
+    }
   })
 );
 
