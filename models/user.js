@@ -12,8 +12,8 @@ const UserSchema = new mongoose.Schema({
     default: 'User'
   },
   // profile_picture: { type: Buffer },
-  registered: { type: Date, default: Date.now }
-  // projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
+  registered: { type: Date, required: true, default: Date.now },
+  projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }]
   // tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }],
   // comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
 });

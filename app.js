@@ -10,6 +10,7 @@ const createError = require('http-errors');
 const User = require('./models/user');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
+const projectsRouter = require('./routes/projects');
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use(express.json());
 app.use(logger('dev'));
 
 app.use('/users', usersRouter);
+app.use('/projects', projectsRouter);
 app.use('/', indexRouter);
 
 app.use((req, res, next) => {
