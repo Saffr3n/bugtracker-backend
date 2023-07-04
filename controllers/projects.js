@@ -43,8 +43,12 @@ exports.list = async (req, res, next) => {
   res.send(projects);
 };
 
-exports.details = (req, res) => {
-  res.send('Project details\n');
+exports.details = async (req, res, next) => {
+  const project = await Project.findById(req.params.id)
+    .exec()
+    .catch((err) => next(err));
+
+  res.send(project);
 };
 
 exports.edit = (req, res) => {
