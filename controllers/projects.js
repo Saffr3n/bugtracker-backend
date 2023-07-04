@@ -28,17 +28,19 @@ exports.create = [
 
     res.status(200).json({
       status: 200,
-      message: 'Project created'
+      message: 'Project created',
+      id: project.id
     });
   }
 ];
 
 exports.list = async (req, res, next) => {
-  const user = await User.findById(req.session.passport.user)
+  const projects = await Project.find()
+    .populate('manager')
     .exec()
     .catch((err) => next(err));
 
-  res.send(user.projects);
+  res.send(projects);
 };
 
 exports.details = (req, res) => {
