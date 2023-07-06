@@ -1,7 +1,9 @@
 const { body, validationResult } = require('express-validator');
 const createError = require('http-errors');
+const mongoose = require('mongoose');
 const User = require('../models/user');
 const Project = require('../models/project');
+const Ticket = require('../models/ticket');
 
 exports.create = [
   body('title').trim().notEmpty().withMessage('Title is required'),
@@ -29,14 +31,15 @@ exports.create = [
     res.status(200).json({
       status: 200,
       message: 'Project created',
-      id: project.id
+      url: project.url
     });
   }
 ];
 
 exports.list = async (req, res, next) => {
   const projects = await Project.find()
-    .populate('manager')
+    .select(['title', 'description', 'manager', 'created'])
+    .populate('manager', ['firstName', 'lastName'])
     .exec()
     .catch((err) => next(err));
 
@@ -44,11 +47,19 @@ exports.list = async (req, res, next) => {
 };
 
 exports.details = async (req, res, next) => {
-  const project = await Project.findById(req.params.id)
-    .exec()
-    .catch((err) => next(err));
+  try {
+    const id = mongoose.Types.ObjectId(req.params.id);
+    const project = await Project.findById(id)
+      .populate('manager')
+      .populate('users')
+      .populate('tickets')
+      .exec()
+      .catch((err) => next(err));
 
-  res.send(project);
+    res.send(project);
+  } catch {
+    next(createError(400, 'Incorrect id'));
+  }
 };
 
 exports.edit = (req, res) => {
@@ -57,8 +68,4 @@ exports.edit = (req, res) => {
 
 exports.delete = (req, res) => {
   res.send('Project delete\n');
-};
-
-exports.tickets = (req, res) => {
-  res.send('Project tickets\n');
 };

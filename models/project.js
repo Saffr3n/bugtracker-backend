@@ -4,9 +4,13 @@ const ProjectSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
   created: { type: Date, required: true, default: Date.now },
-  manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
-  // tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }]
+  manager: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }]
 });
 
 ProjectSchema.virtual('url').get(function () {

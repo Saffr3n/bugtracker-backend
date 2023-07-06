@@ -11,6 +11,8 @@ const User = require('./models/user');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const projectsRouter = require('./routes/projects');
+const ticketsRouter = require('./routes/tickets');
+const commentsRouter = require('./routes/comments');
 
 const app = express();
 
@@ -74,6 +76,8 @@ app.use(logger('dev'));
 
 app.use('/users', usersRouter);
 app.use('/projects', projectsRouter);
+app.use('/tickets', ticketsRouter);
+app.use('/comments', commentsRouter);
 app.use('/', indexRouter);
 
 app.use((req, res, next) => {

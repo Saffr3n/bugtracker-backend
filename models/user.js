@@ -13,9 +13,9 @@ const UserSchema = new mongoose.Schema({
   },
   // profile_picture: { type: Buffer },
   registered: { type: Date, required: true, default: Date.now },
-  projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }]
-  // tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }],
-  // comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
+  projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
+  tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }],
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
 });
 
 UserSchema.virtual('url').get(function () {
