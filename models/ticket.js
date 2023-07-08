@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const TicketSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  status: { type: Boolean, required: true, default: false },
+  status: { type: Boolean, required: true, default: true },
   created: { type: Date, required: true, default: Date.now },
   project: {
     type: mongoose.Schema.Types.ObjectId,
