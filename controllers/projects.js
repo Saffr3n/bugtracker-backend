@@ -31,7 +31,7 @@ exports.create = [
     res.status(200).json({
       status: 200,
       message: 'Project created',
-      url: project.url
+      project: { _id: project.id, url: project.url }
     });
   }
 ];
@@ -43,20 +43,28 @@ exports.list = async (req, res, next) => {
     .exec()
     .catch((err) => next(err));
 
-  res.send(projects);
+  res.status(200).json({
+    status: 200,
+    message: 'Projects list retrieved',
+    projects
+  });
 };
 
 exports.details = async (req, res, next) => {
   try {
     const id = mongoose.Types.ObjectId(req.params.id);
     const project = await Project.findById(id)
-      .populate('manager')
+      .populate('manager', ['firstName', 'lastName'])
       .populate('users')
-      .populate('tickets')
+      .populate({ path: 'tickets', select: ['title', 'description', 'status', 'submitter', 'created'], populate: { path: 'submitter', select: ['firstName', 'lastName'] } })
       .exec()
       .catch((err) => next(err));
 
-    res.send(project);
+    res.status(200).json({
+      status: 200,
+      message: 'Project details retrieved',
+      project
+    });
   } catch {
     next(createError(400, 'Incorrect id'));
   }

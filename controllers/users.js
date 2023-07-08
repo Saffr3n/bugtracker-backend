@@ -4,18 +4,8 @@ const createError = require('http-errors');
 const User = require('../models/user');
 
 exports.create = [
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('Email is not valid'),
-  body('password')
-    .trim()
-    .notEmpty()
-    .withMessage('Password is required')
-    .isLength({ min: 8 })
-    .withMessage('Password is less than 8 characters'),
+  body('email').trim().notEmpty().withMessage('Email is required').isEmail().withMessage('Email is not valid'),
+  body('password').trim().notEmpty().withMessage('Password is required').isLength({ min: 8 }).withMessage('Password is less than 8 characters'),
   body('firstName').trim().notEmpty().withMessage('First name is required'),
   body('lastName').trim().notEmpty().withMessage('Last name is required'),
 
@@ -28,9 +18,7 @@ exports.create = [
         errors
           .array()
           .reduce((filteredErrors, currentError) => {
-            if (
-              !filteredErrors.find((err) => err.param === currentError.param)
-            ) {
+            if (!filteredErrors.find((err) => err.param === currentError.param)) {
               filteredErrors.push(currentError);
             }
             return filteredErrors;
@@ -51,9 +39,7 @@ exports.create = [
       return next(createError(400, 'User already exists'));
     }
 
-    const hash = await bcrypt
-      .hash(req.body.password, 10)
-      .catch((err) => next(err));
+    const hash = await bcrypt.hash(req.body.password, 10).catch((err) => next(err));
 
     const user = new User({
       email: req.body.email,
@@ -71,7 +57,8 @@ exports.create = [
 
       res.status(200).json({
         status: 200,
-        message: 'Signed up'
+        message: 'Signed up',
+        user: { _id: user.id, role: user.role }
       });
     });
   }

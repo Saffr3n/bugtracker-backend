@@ -10,6 +10,5 @@ router.get('/', project.list);
 router.get('/:id', project.details);
 router.put('/:id', project.edit);
 router.delete('/:id', project.delete);
-router.get('/:id/tickets', project.tickets);
 
 module.exports = router;
