@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ['Admin', 'Project Manager', 'User'],
+    enum: ['Admin', 'Project Manager', 'Developer', 'User'],
     default: 'User'
   },
   // profile_picture: { type: Buffer },
