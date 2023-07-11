@@ -54,7 +54,7 @@ exports.details = async (req, res, next) => {
   try {
     const id = mongoose.Types.ObjectId(req.params.id);
     const project = await Project.findById(id)
-      .populate('manager', ['firstName', 'lastName'])
+      .populate('manager', ['firstName', 'lastName', 'registered'])
       .populate('users')
       .populate({ path: 'tickets', select: ['title', 'description', 'status', 'submitter', 'created'], populate: { path: 'submitter', select: ['firstName', 'lastName'] } })
       .exec()
@@ -66,7 +66,7 @@ exports.details = async (req, res, next) => {
       project
     });
   } catch {
-    next(createError(400, 'Incorrect id'));
+    next(createError(400, 'Incorrect ID'));
   }
 };
 
