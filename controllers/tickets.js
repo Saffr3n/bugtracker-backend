@@ -1,5 +1,6 @@
 const { body, validationResult } = require('express-validator');
 const createError = require('http-errors');
+const mongoose = require('mongoose');
 const User = require('../models/user');
 const Project = require('../models/project');
 const Ticket = require('../models/ticket');
@@ -65,8 +66,19 @@ exports.list = async (req, res, next) => {
   });
 };
 
-exports.details = (req, res) => {
-  res.send('Ticket details\n');
+exports.details = async (req, res, next) => {
+  try {
+    const id = mongoose.Types.ObjectId(req.params.id);
+    const ticket = await Ticket.findById(id).exec.catch((err) => next(err));
+
+    res.status(200).json({
+      status: 200,
+      message: 'Ticket details retrieved',
+      ticket
+    });
+  } catch {
+    createError(400, 'Incorrect ID');
+  }
 };
 
 exports.edit = (req, res) => {
