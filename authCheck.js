@@ -5,5 +5,5 @@ module.exports = (req, res, next) => {
     return next(createError(401));
   }
 
-  next();
+  return next();
 };
