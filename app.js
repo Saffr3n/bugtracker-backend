@@ -17,31 +17,39 @@ const commentsRouter = require('./routes/comments');
 const app = express();
 
 passport.use(
-  new JSONStrategy({ usernameProp: 'email' }, (email, password, done) => {
-    User.findOne({ email: new RegExp(`^${email}$`, 'i') }).exec(
-      async (err, user) => {
-        if (err) {
-          return done(err);
-        }
+  new JSONStrategy({ usernameProp: 'email' }, async (email, password, done) => {
+    let user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
+      .select('-__v')
+      .exec()
+      .catch((err) => done(err));
 
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-          return done(null, false);
-        }
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return done(null, false);
+    }
 
-        done(null, user);
-      }
-    );
+    user = user.toObject();
+    user.id = user._id.toString();
+    delete user._id;
+    delete user.password;
+
+    return done(null, user);
   })
 );
 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser(async (id, done) => {
+  let user = await User.findById(id)
+    .select('-password -__v')
+    .exec()
+    .catch((err) => done(err));
 
-passport.deserializeUser((id, done) => {
-  User.findById(id).exec((err, user) => {
-    done(err, user);
-  });
+  if (!user) return done(null, false);
+
+  user = user.toObject();
+  user.id = user._id.toString();
+  delete user._id;
+
+  return done(null, user);
 });
 
 mongoose.set('strictQuery', false);
@@ -81,17 +89,23 @@ app.use('/comments', commentsRouter);
 app.use('/', indexRouter);
 
 app.use((req, res, next) => {
-  next(createError(404));
+  const err = createError(404, 'Path not found');
+  return next(err);
 });
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  const error = { status: err.status || 500 };
-  error.message = error.status === 500 ? 'Server error' : err.message;
+  const error = {
+    status: err.status || 500,
+    message: '',
+    session: req.user || null
+  };
 
   if (req.app.get('env') === 'development') {
     error.message = err.message || 'Unknown error';
     error.stack = err.stack;
+  } else {
+    error.message = error.status === 500 ? 'Server error' : err.message || 'Unknown error';
   }
 
   res.status(error.status).json(error);
