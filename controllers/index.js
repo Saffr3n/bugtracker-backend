@@ -2,9 +2,8 @@ const passport = require('passport');
 const createError = require('http-errors');
 
 exports.signin = (req, res, next) => {
-  passport.authenticate('json', async (err, user) => {
+  passport.authenticate('json', (err, user) => {
     if (err) return next(err);
-
     if (!user) {
       const err = createError(400, 'Incorrect email or password');
       return next(err);
@@ -34,7 +33,7 @@ exports.signout = (req, res, next) => {
   });
 };
 
-exports.session = async (req, res) => {
+exports.session = (req, res) => {
   res.status(200).json({
     status: 200,
     message: 'Authorized',
