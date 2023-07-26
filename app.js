@@ -23,9 +23,13 @@ passport.use(
       .exec()
       .catch((err) => done(err));
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return done(null, false);
-    }
+    if (user === undefined) return;
+    if (!user) return done(null, false);
+
+    const correctPassword = await bcrypt.compare(password, user.password).catch((err) => done(err));
+
+    if (correctPassword === undefined) return;
+    if (!correctPassword) return done(null, false);
 
     user = user.toObject();
     user.id = user._id.toString();
@@ -43,6 +47,7 @@ passport.deserializeUser(async (id, done) => {
     .exec()
     .catch((err) => done(err));
 
+  if (user === undefined) return;
   if (!user) return done(null, false);
 
   user = user.toObject();
