@@ -22,19 +22,26 @@ exports.create = [
       .exec()
       .catch((err) => next(err));
 
+    if (foundUser === undefined) return;
     if (foundUser) {
       const err = createError(400, 'User already exists');
       return next(err);
     }
 
+    const hash = await bcrypt.hash(password, parseInt(process.env.SALT, 10)).catch((err) => next(err));
+
+    if (!hash) return;
+
     let user = new User({
       email,
-      password: await bcrypt.hash(password, parseInt(process.env.SALT, 10)).catch((err) => next(err)),
+      password: hash,
       firstName,
       lastName
     });
 
-    await user.save().catch((err) => next(err));
+    const saved = await user.save().catch((err) => next(err));
+
+    if (!saved) return;
 
     user = user.toObject();
     user.id = user._id.toString();
@@ -62,12 +69,14 @@ exports.list = async (req, res, next) => {
     return next(err);
   }
 
-  const users = (
-    await User.find()
-      .select('-password -__v')
-      .exec()
-      .catch((err) => next(err))
-  ).map((doc) => {
+  let users = await User.find()
+    .select('-password -__v')
+    .exec()
+    .catch((err) => next(err));
+
+  if (!users) return;
+
+  users = users.map((doc) => {
     const user = doc.toObject();
 
     user.id = user._id.toString();
@@ -101,6 +110,7 @@ exports.details = [
       .exec()
       .catch((err) => next(err));
 
+    if (user === undefined) return;
     if (!user) {
       const err = createError(404, 'User not found');
       return next(err);
@@ -147,15 +157,23 @@ exports.edit = [
     const update = {};
 
     if (email) update.email = email;
-    if (password) update.password = await bcrypt.hash(password, parseInt(process.env.SALT, 10)).catch((err) => next(err));
     if (firstName) update.firstName = firstName;
     if (lastName) update.lastName = lastName;
     if (role && requester.role === 'Admin') update.role = role;
+    if (password) {
+      const hash = await bcrypt.hash(password, parseInt(process.env.SALT, 10)).catch((err) => next(err));
 
-    let user = await User.findByIdAndUpdate(userId, update, { fields: '-password -__v', new: true })
+      if (!hash) return;
+
+      update.password = hash;
+    }
+
+    let user = await User.findByIdAndUpdate(userId, update, { new: true })
+      .select('-password -__v')
       .exec()
       .catch((err) => next(err));
 
+    if (user === undefined) return;
     if (!user) {
       const err = createError(404, 'User not found');
       return next(err);
@@ -170,8 +188,7 @@ exports.edit = [
     res.status(200).json({
       status: 200,
       message: 'User details updated',
-      session: req.user,
-      user
+      session: req.user
     });
   }
 ];
@@ -195,14 +212,24 @@ exports.delete = [
       return next(err);
     }
 
-    if (requester.role === 'Admin' && requester.id === userId) {
+    const user = await User.findById(userId)
+      .populate('projects tickets comments')
+      .exec()
+      .catch((err) => next(err));
+
+    if (user === undefined) return;
+    if (!user) {
+      const err = createError(404, 'User not found');
+      return next(err);
+    }
+    if (user.role === 'Admin') {
       const err = createError(403, 'Cannot delete admin');
       return next(err);
     }
 
-    await User.deleteOne({ _id: userId })
-      .exec()
-      .catch((err) => next(err));
+    const deleted = await user.deleteOne().catch((err) => next(err));
+
+    if (!deleted) return;
 
     res.status(200).json({
       status: 200,
