@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-const Project = require('./project');
-const Ticket = require('./ticket');
-const Comment = require('./comment');
 
 const UserSchema = new mongoose.Schema({
   email: { type: String, required: true },
@@ -20,45 +17,36 @@ const UserSchema = new mongoose.Schema({
   tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }],
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
 });
-UserSchema.pre('deleteOne', async function () {
-  const user = await this.model
-    .findOne(this.getFilter())
-    .exec()
-    .catch((err) => {
-      throw err;
-    });
+UserSchema.pre('deleteOne', { document: true, query: false }, async function () {
+  const user = await this.populate('projects tickets comments').catch((err) => {
+    throw err;
+  });
+  const { projects, tickets, comments } = user;
+  const promises = [];
 
-  if (!user) return;
+  promises.push(
+    ...projects.map((project) => {
+      const managerId = project.manager.toString();
+      const update = { $pull: { users: user.id } };
 
-  await Project.updateMany({ manager: user.id }, { manager: null })
-    .exec()
-    .catch((err) => {
-      throw err;
-    });
+      if (managerId === user.id) update.manager = null;
 
-  await Project.updateMany({ users: user.id }, { $pull: { users: user.id } })
-    .exec()
-    .catch((err) => {
-      throw err;
-    });
+      return project.updateOne(update);
+    }),
+    ...tickets.map((ticket) => {
+      const submitterId = ticket.submitter.toString();
+      const update = { $pull: { devs: user.id } };
 
-  await Ticket.updateMany({ submitter: user.id }, { submitter: null })
-    .exec()
-    .catch((err) => {
-      throw err;
-    });
+      if (submitterId === user.id) update.submitter = null;
 
-  await Ticket.updateMany({ devs: user.id }, { $pull: { devs: user.id } })
-    .exec()
-    .catch((err) => {
-      throw err;
-    });
+      return ticket.updateOne(update);
+    }),
+    ...comments.map((comment) => comment.updateOne({ submitter: null }))
+  );
 
-  await Comment.updateMany({ submitter: user.id }, { submitter: null })
-    .exec()
-    .catch((err) => {
-      throw err;
-    });
+  await Promise.all(promises).catch((err) => {
+    throw err;
+  });
 });
 
 module.exports = mongoose.model('User', UserSchema);
