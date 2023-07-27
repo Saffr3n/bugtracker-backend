@@ -19,7 +19,7 @@ const app = express();
 passport.use(
   new JSONStrategy({ usernameProp: 'email' }, async (email, password, done) => {
     let user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
-      .select('-__v')
+      .select({ id: '$_id', _id: 0, email: 1, password: 1, firstName: 1, lastName: 1, role: 1 })
       .exec()
       .catch((err) => done(err));
 
@@ -32,8 +32,6 @@ passport.use(
     if (!correctPassword) return done(null, false);
 
     user = user.toObject();
-    user.id = user._id.toString();
-    delete user._id;
     delete user.password;
 
     return done(null, user);
@@ -43,7 +41,7 @@ passport.use(
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   let user = await User.findById(id)
-    .select('-password -__v')
+    .select({ id: '$_id', _id: 0, email: 1, firstName: 1, lastName: 1, role: 1 })
     .exec()
     .catch((err) => done(err));
 
@@ -51,8 +49,6 @@ passport.deserializeUser(async (id, done) => {
   if (!user) return done(null, false);
 
   user = user.toObject();
-  user.id = user._id.toString();
-  delete user._id;
 
   return done(null, user);
 });
