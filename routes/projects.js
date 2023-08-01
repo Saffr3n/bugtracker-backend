@@ -1,5 +1,5 @@
 const express = require('express');
-const authCheck = require('../authCheck');
+const { authCheck } = require('../helpers');
 const project = require('../controllers/projects');
 
 const router = express.Router();
