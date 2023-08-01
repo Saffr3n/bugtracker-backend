@@ -18,8 +18,7 @@ const app = express();
 
 passport.use(
   new JSONStrategy({ usernameProp: 'email' }, async (email, password, done) => {
-    let user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
-      .select({ id: '$_id', _id: 0, email: 1, password: 1, firstName: 1, lastName: 1, role: 1 })
+    const user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
       .exec()
       .catch((err) => done(err));
 
@@ -31,24 +30,18 @@ passport.use(
     if (correctPassword === undefined) return;
     if (!correctPassword) return done(null, false);
 
-    user = user.toObject();
-    delete user.password;
-
     return done(null, user);
   })
 );
 
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
-  let user = await User.findById(id)
-    .select({ id: '$_id', _id: 0, email: 1, firstName: 1, lastName: 1, role: 1 })
+  const user = await User.findById(id)
     .exec()
     .catch((err) => done(err));
 
   if (user === undefined) return;
   if (!user) return done(null, false);
-
-  user = user.toObject();
 
   return done(null, user);
 });
@@ -61,7 +54,7 @@ async function main() {
 
 app.use(
   cors({
-    origin: 'http://localhost:8080',
+    origin: process.env.ORIGIN,
     credentials: true,
     optionsSuccessStatus: 200
   })
@@ -97,16 +90,16 @@ app.use((req, res, next) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const error = {
-    status: err.status || 500,
-    message: '',
+    status: err.status || err.code || 500,
+    message: err.message || err.msg || 'Unknown error',
     session: req.user || null
   };
 
   if (req.app.get('env') === 'development') {
-    error.message = err.message || 'Unknown error';
     error.stack = err.stack;
-  } else {
-    error.message = error.status === 500 ? 'Server error' : err.message || 'Unknown error';
+  } else if (error.status >= 500) {
+    error.status = 500;
+    error.message = 'Server error';
   }
 
   res.status(error.status).json(error);
