@@ -5,43 +5,34 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
-  role: {
-    type: String,
-    required: true,
-    enum: ['Admin', 'Project Manager', 'Developer', 'User'],
-    default: 'User'
-  },
+  role: { type: String, enum: ['Admin', 'Project Manager', 'Developer', 'User'], default: 'User' },
   // profile_picture: { type: Buffer },
-  registered: { type: Date, required: true, default: Date.now },
   projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
   tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }],
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+  registered: { type: Date, default: Date.now }
 });
 UserSchema.pre('deleteOne', { document: true, query: false }, async function () {
   const user = await this.populate('projects tickets comments').catch((err) => {
     throw err;
   });
   const { projects, tickets, comments } = user;
-  const promises = [];
 
+  const promises = [];
   promises.push(
     ...projects.map((project) => {
+      const updateOpts = { $pull: { users: user.id } };
       const managerId = project.manager.toString();
-      const update = { $pull: { users: user.id } };
-
-      if (managerId === user.id) update.manager = null;
-
-      return project.updateOne(update);
+      if (managerId === user.id) updateOpts.manager = null;
+      return project.updateOne(updateOpts).exec();
     }),
     ...tickets.map((ticket) => {
+      const updateOpts = { $pull: { devs: user.id } };
       const submitterId = ticket.submitter.toString();
-      const update = { $pull: { devs: user.id } };
-
-      if (submitterId === user.id) update.submitter = null;
-
-      return ticket.updateOne(update);
+      if (submitterId === user.id) updateOpts.submitter = null;
+      return ticket.updateOne(updateOpts).exec();
     }),
-    ...comments.map((comment) => comment.updateOne({ submitter: null }))
+    ...comments.map((comment) => comment.updateOne({ submitter: null }).exec())
   );
 
   await Promise.all(promises).catch((err) => {
