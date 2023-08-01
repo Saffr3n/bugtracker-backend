@@ -1,5 +1,6 @@
 const passport = require('passport');
 const createError = require('http-errors');
+const { normalizeDocument } = require('../helpers');
 
 exports.signin = (req, res, next) => {
   passport.authenticate('json', (err, user) => {
@@ -15,7 +16,7 @@ exports.signin = (req, res, next) => {
       res.status(200).json({
         status: 200,
         message: 'Signed in',
-        session: req.user
+        session: normalizeDocument(req.user)
       });
     });
   })(req, res, next);
@@ -37,6 +38,6 @@ exports.session = (req, res) => {
   res.status(200).json({
     status: 200,
     message: 'Authorized',
-    session: req.user
+    session: normalizeDocument(req.user)
   });
 };
