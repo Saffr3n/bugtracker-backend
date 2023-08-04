@@ -159,11 +159,6 @@ exports.edit = [
   body('role').optional().isString().withMessage('User role must be of type String').trim().isIn(['Admin', 'Project Manager', 'Developer', 'User']).withMessage('Invalid user role -> "Admin | Project Manager | Developer | User"'),
 
   async (req, res, next) => {
-    if (req.user.role !== 'Admin' && req.user.id !== req.params.id) {
-      const err = createError(403, 'Access denied');
-      return next(err);
-    }
-
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -178,6 +173,11 @@ exports.edit = [
     if (correctPassword === undefined) return;
     if (!correctPassword) {
       const err = createError(400, 'password.old: Incorrect password');
+      return next(err);
+    }
+
+    if (req.user.role !== 'Admin' && req.user.id !== req.params.id) {
+      const err = createError(403, 'Access denied');
       return next(err);
     }
 
@@ -236,11 +236,6 @@ exports.delete = [
   body('password').isString().withMessage('Password must be of type String').trim().notEmpty().withMessage('Password is required'),
 
   async (req, res, next) => {
-    if (req.user.role !== 'Admin' && req.user.id !== req.params.id) {
-      const err = createError(403, 'Access denied');
-      return next(err);
-    }
-
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -253,7 +248,12 @@ exports.delete = [
 
     if (correctPassword === undefined) return;
     if (!correctPassword) {
-      const err = createError(400, 'Incorrect password');
+      const err = createError(400, 'password: Incorrect password');
+      return next(err);
+    }
+
+    if (req.user.role !== 'Admin' && req.user.id !== req.params.id) {
+      const err = createError(403, 'Access denied');
       return next(err);
     }
 

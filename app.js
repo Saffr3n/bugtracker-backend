@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const logger = require('morgan');
 const createError = require('http-errors');
+const { normalizeDocument } = require('./helpers');
 const User = require('./models/user');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
@@ -92,7 +93,7 @@ app.use((err, req, res, next) => {
   const error = {
     status: err.status || err.code || 500,
     message: err.message || err.msg || 'Unknown error',
-    session: req.user || null
+    session: normalizeDocument(req.user) || null
   };
 
   if (req.app.get('env') === 'development') {
