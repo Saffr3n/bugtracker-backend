@@ -280,7 +280,7 @@ exports.delete = [
     res.status(200).json({
       status: 200,
       message: 'User deleted',
-      session: req.user.role === 'Admin' ? normalizeDocument(req.user) : null
+      session: req.user.role === 'Admin' ? normalizeDocument(req.user) : {}
     });
   }
 ];

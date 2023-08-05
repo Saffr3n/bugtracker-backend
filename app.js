@@ -93,7 +93,7 @@ app.use((err, req, res, next) => {
   const error = {
     status: err.status || err.code || 500,
     message: err.message || err.msg || 'Unknown error',
-    session: normalizeDocument(req.user) || null
+    session: normalizeDocument(req.user) || {}
   };
 
   if (req.app.get('env') === 'development') {
